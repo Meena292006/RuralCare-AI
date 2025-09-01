@@ -1,0 +1,74 @@
+/* Full page container */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: radial-gradient(circle at top left, #0d0d0d, #121212, #1a1a1a);
+  font-family: 'Segoe UI', sans-serif;
+  color: #e0e0e0;
+}
+
+/* Card styling */
+.login-card {
+  background: rgba(20, 20, 20, 0.95);
+  padding: 2rem;
+  border-radius: 1rem;
+  width: 350px;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+}
+
+.login-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.15);
+}
+
+/* Title */
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #00f0ff;
+  letter-spacing: 1px;
+}
+
+/* Subtitle */
+.login-subtitle {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 1.5rem;
+}
+
+/* Google Login Button */
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0.75rem;
+  background: #ffffff;
+  color: #333;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.google-btn:hover {
+  background: #f5f5f5;
+  transform: scale(1.02);
+}
+
+/* Google Icon */
+.google-icon {
+  width: 20px;
+  height: 20px;
+}
