@@ -4,13 +4,13 @@ const OpenAI = require('openai');
 const User = require('../models/User');
 
 if (!process.env.OPENAI_API_KEY) {
-  console.error('❌ Missing OPENAI_API_KEY');
+  console.error(' Missing OPENAI_API_KEY');
   process.exit(1);
 }
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Health system prompt
+
 const HEALTH_SYSTEM_PROMPT = `
 You are RuralCare AI, a careful, evidence-based health assistant for general information only.
 - You are NOT a doctor and do not give diagnoses, prescriptions, or treatment plans.
@@ -19,12 +19,12 @@ You are RuralCare AI, a careful, evidence-based health assistant for general inf
 - Be clear about uncertainty and suggest reputable resources.
 `;
 
-// Allowed language codes (mirror your schema)
+
 const ALLOWED_LANGS = new Set([
   'en','hi','ta','te','ml','kn','gu','mr','pa','bn','ur','or','as','kok','ne','sd','mai','sa','bho','doi','mni'
 ]);
 
-// Optional: code -> human-readable name
+
 const CODE_TO_NAME = {
   en: 'English', hi: 'Hindi', ta: 'Tamil', te: 'Telugu', ml: 'Malayalam', kn: 'Kannada',
   gu: 'Gujarati', mr: 'Marathi', pa: 'Punjabi', bn: 'Bengali', ur: 'Urdu', or: 'Odia',

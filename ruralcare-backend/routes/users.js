@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
-// POST /api/users → Create new user
 router.post('/', async (req, res) => {
   console.log('POST /api/users body:', req.body);
   try {
@@ -17,7 +16,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /api/users/:uid → Get user by UID
 router.get('/:uid', async (req, res) => {
   try {
     const user = await User.findOne({ uid: req.params.uid });
@@ -29,11 +27,14 @@ router.get('/:uid', async (req, res) => {
   }
 });
 
-// PUT /api/users/:uid → Update user (any fields)
 router.put('/:uid', async (req, res) => {
   try {
-    const updates = req.body;
-    const user = await User.findOneAndUpdate({ uid: req.params.uid }, updates, { new: true });
+    const { location, ...updates } = req.body; // Destructure location if present
+    const user = await User.findOneAndUpdate(
+      { uid: req.params.uid },
+      { $set: { location, ...updates } },
+      { new: true, runValidators: true }
+    );
     if (!user) return res.status(404).json({ message: 'User not found' });
     console.log(`User ${req.params.uid} updated:`, user);
     res.json(user);

@@ -50,7 +50,7 @@ const Chat = () => {
     return () => unsub();
   }, [auth, navigate]);
 
-  // Scroll chat to bottom on new messages
+  
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
