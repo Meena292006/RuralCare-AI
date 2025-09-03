@@ -1,18 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { getAuth } from 'firebase/auth';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
 
-const PatientTracking = () => {
-  const [location, setLocation] = useState(null);
-  const [nearbyHospitals, setNearbyHospitals] = useState([]);
-  const auth = getAuth();
-  const uid = auth.currentUser?.uid;
+export default function PatientTracking() {
+  const [pos, setPos] = useState([20.59, 78.96]); // default India
+  const [hospitals, setHospitals] = useState([]);
 
-  
-  const hospitals = [
-    { name: "Rural Hospital 1", latitude: 12.9716, longitude: 77.5946 }, 
-    { name: "Rural Hospital 2", latitude: 13.0827, longitude: 80.2707 }, 
-
-  ];
+  // custom marker icon (fix missing marker issue in leaflet)
+  const userIcon = new L.Icon({
+    iconUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+  });
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -21,77 +24,84 @@ const PatientTracking = () => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setLocation({ latitude, longitude });
-        findNearbyHospitals(latitude, longitude);
+      (p) => {
+        const coords = [p.coords.latitude, p.coords.longitude];
+        setPos(coords);
+        fetchNearby(coords[0], coords[1]);
       },
-      (error) => {
-        console.error("Error getting location:", error);
-        alert("Unable to retrieve your location. Please enable location services.");
+      (err) => {
+        console.error("Geolocation error:", err);
+        alert("Could not fetch your location, showing default India map.");
+        // still try to fetch hospitals near default India center
+        fetchNearby(20.59, 78.96);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
     );
   }, []);
 
-  const findNearbyHospitals = (lat, lon) => {
-    const nearby = hospitals
-      .map(hosp => ({
-        ...hosp,
-        distance: calculateDistance(lat, lon, hosp.latitude, hosp.longitude)
-      }))
-      .filter(hosp => hosp.distance <= 50) // Within 50 km, adjust as needed
-      .sort((a, b) => a.distance - b.distance);
-
-    setNearbyHospitals(nearby);
-  };
-
-  
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; 
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; 
-  };
-
-  useEffect(() => {
-    if (location && uid) {
-      fetch(`http://localhost:5000/api/users/${uid}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ location: { lat: location.latitude, lon: location.longitude } }),
-      })
-        .catch(err => console.error("Failed to update location:", err));
+  async function fetchNearby(lat, lng) {
+    try {
+      const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const r = await axios.get(`${API}/api/hospitals/nearby`, {
+        params: { lat, lng, radius: 10000 }, // radius in meters
+      });
+      setHospitals(r.data);
+    } catch (err) {
+      console.error("Error fetching hospitals:", err);
     }
-  }, [location, uid]);
+  }
 
   return (
-    <div className="tracking-container">
-      <h2>Patient Location Tracking</h2>
-      {location ? (
-        <p>Your location: {location.latitude}, {location.longitude}</p>
-      ) : (
-        <p>Locating you...</p>
-      )}
-      <h3>Nearby Hospitals</h3>
-      {nearbyHospitals.length > 0 ? (
-        <ul>
-          {nearbyHospitals.map((hosp, index) => (
-            <li key={index}>
-              {hosp.name} - {hosp.distance.toFixed(2)} km
-            </li>
+    <div
+      style={{
+        maxWidth: "900px",
+        margin: "20px auto",
+        padding: "20px",
+        background: "#fff",
+        borderRadius: "12px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+      }}
+    >
+      <h2 style={{ textAlign: "center", marginBottom: "16px" }}>
+        🏥 Nearby Hospitals
+      </h2>
+
+      <div style={{ height: "70vh", borderRadius: "12px", overflow: "hidden" }}>
+        <MapContainer
+          center={pos}
+          zoom={13}
+          style={{ height: "100%", width: "100%" }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a>'
+          />
+          <Marker position={pos} icon={userIcon}>
+            <Popup>You are here 📍</Popup>
+          </Marker>
+
+          {hospitals.map((h) => (
+            <Marker
+              key={h._id}
+              position={[
+                h.location.coordinates[1],
+                h.location.coordinates[0],
+              ]}
+              icon={userIcon}
+            >
+              <Popup>
+                <b>{h.name}</b>
+                <br />
+                {h.address}
+              </Popup>
+            </Marker>
           ))}
-        </ul>
-      ) : (
-        <p>No hospitals within 50 km or location not yet determined.</p>
-      )}
+        </MapContainer>
+      </div>
     </div>
   );
-};
-
-export default PatientTracking;
+}

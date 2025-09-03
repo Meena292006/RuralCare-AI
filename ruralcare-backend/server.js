@@ -6,7 +6,7 @@ const cors = require('cors');
 const app = express();
 
 // (recommended) restrict CORS in dev
-app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*'}));
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
 app.use(express.json());
 
 // Import routes
@@ -16,6 +16,10 @@ app.use('/api/users', userRoutes);
 // NEW: chat route
 const chatRoutes = require('./routes/chat');
 app.use('/api/chat', chatRoutes);
+
+// ✅ NEW: hospitals route
+const hospitalsRoutes = require('./routes/hospitals');
+app.use('/api/hospitals', hospitalsRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))

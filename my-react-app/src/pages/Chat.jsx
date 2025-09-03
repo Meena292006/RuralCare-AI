@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import PatientTracking from './patienttracking'; // ✅ for map rendering
 
 const ALLOWED_LANGS = [
   { code: 'en', name: 'English' },
@@ -23,9 +24,8 @@ const ALLOWED_LANGS = [
   { code: 'sa', name: 'संस्कृतम्' },
   { code: 'bho', name: 'भोजपुरी' },
   { code: 'doi', name: 'डोगरी' },
-  { code: 'mni', name: 'মেইতেই লোন্' } // Meitei (Manipuri) in native script
+  { code: 'mni', name: 'মেইতেই লোন্' }
 ];
-
 
 const Chat = () => {
   const auth = getAuth();
@@ -50,7 +50,6 @@ const Chat = () => {
     return () => unsub();
   }, [auth, navigate]);
 
-  
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -70,8 +69,6 @@ const Chat = () => {
       const res = await fetch('http://localhost:5000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Send uid so backend can fetch saved language.
-        // Also send language so dropdown can override if user changes it here.
         body: JSON.stringify({ message: userInput, mode: 'health', uid, language })
       });
 
@@ -80,7 +77,12 @@ const Chat = () => {
         throw new Error(data?.error || 'Chat API error');
       }
 
-      setMessages(prev => [...prev, { from: 'bot', text: data.reply || 'No response' }]);
+      // ✅ Detect if reply requests a map
+      if (data.reply && data.reply.toLowerCase().includes('map')) {
+        setMessages(prev => [...prev, { from: 'bot', type: 'map' }]);
+      } else {
+        setMessages(prev => [...prev, { from: 'bot', text: data.reply || 'No response' }]);
+      }
     } catch (err) {
       console.error('Chat error:', err);
       setMessages(prev => [...prev, { from: 'bot', text: 'Error: Could not get a response.' }]);
@@ -118,7 +120,13 @@ const Chat = () => {
               key={idx}
               className={`message ${msg.from === 'user' ? 'user' : 'bot'}`}
             >
-              {msg.text}
+              {msg.type === 'map' ? (
+                <div className="map-container">
+                  <PatientTracking />
+                </div>
+              ) : (
+                msg.text
+              )}
             </div>
           ))}
           <div ref={messagesEndRef} />
@@ -135,7 +143,6 @@ const Chat = () => {
         </footer>
       </div>
 
-      {/* NOTE: changed <style jsx> to <style>, CSS content unchanged */}
       <style>{`
         .chat-container {
           display: flex;
@@ -219,6 +226,15 @@ const Chat = () => {
         button:hover {
           background-color: #00cccc;
           transform: scale(1.05);
+        }
+        /* ✅ Map container inside bot messages */
+        .message .map-container {
+          width: 100%;
+          height: 300px;
+          margin-top: 10px;
+          border-radius: 0.75rem;
+          overflow: hidden;
+          border: 1px solid #00f0ff55;
         }
       `}</style>
     </>
